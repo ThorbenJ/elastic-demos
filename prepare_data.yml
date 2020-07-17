@@ -16,7 +16,7 @@
 
   tasks:
 
-  - name: Check arguments
+  - name: Requires el_cloud_id and el_cloud_pw
     fail:
     when: not el_cloud_id or not el_cloud_pw
     tags:

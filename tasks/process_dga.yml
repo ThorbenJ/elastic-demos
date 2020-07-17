@@ -1,11 +1,11 @@
 ---
- 
+
 - name: "Run dga: {{ dga.name }}"
-  shell:
+  shell: # noqa 301
     cmd: "{{ ansible_playbook_python }} {{ dga.cmd|default('dga.py') }} >domain_list.ndjson"
     executable: "/bin/sh"
     chdir: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}"
- 
+
 - name: "Convert {{ dga.name }} output to bulk ingest"
   replace:
     path: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}/domain_list.ndjson"
@@ -30,6 +30,8 @@
     return_content: true
   register: result
   ignore_errors: true
+  tags:
+    ingest
 
 - name: Dump result
   debug: var=result verbosity=1
