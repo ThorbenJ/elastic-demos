@@ -1,0 +1,56 @@
+---
+
+# The purpose of this Ansible playbook is to create and populate an Elasticsearch
+# index with "normal" and "dga" domain, to use as a corpus for Machine Learning
+
+- hosts: all
+  vars:
+    # Big Thanks to "@baderj" for https://github.com/baderj/domain_generation_algorithms
+    dga_gen_url: https://github.com/baderj/domain_generation_algorithms/archive/master.zip
+    workdir: "{{ lookup('env', 'TMPDIR') }}/el-demo"
+    el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
+    corpus_index: "domain_corpus"
+    some_hex: "15facade"
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+  tasks:
+
+  - name: Check arguments
+    fail:
+    when: not el_cloud_id or not el_cloud_pw
+    tags:
+    - always
+
+  - name: Set variables
+    set_fact:
+      elasticsearch_url: "https://{{ el_cloud_info.split('$')[1] }}.{{ el_cloud_info.split('$')[0] }}"
+      kibana_url: "https://{{ el_cloud_info.split('$')[2] }}.{{ el_cloud_info.split('$')[0] }}"
+    tags:
+    - always
+
+  - name: "Check working dir: {{ workdir }}"
+    file: path="{{ workdir }}" state=directory mode=0775
+    tags:
+    - always
+
+  - name: Ingest Alexa Top 1M
+    import_tasks: "tasks/ingest_top1m.yml"
+    vars:
+      top1m_url: http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+      top1m_name: Alexa
+    tags:
+    - alexa
+
+  - name: Ingest Umbrella Top 1M
+    import_tasks: "tasks/ingest_top1m.yml"
+    vars:
+      top1m_url: http://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip
+      top1m_name: Umbrella
+    tags:
+    - umbrella
+
+  - name: Ingest DGAs
+    import_tasks: "tasks/ingest_dga_domains.yml"
+    tags:
+    - dga

@@ -1,0 +1,35 @@
+---
+ 
+- name: "Run dga: {{ dga.name }}"
+  shell:
+    cmd: "{{ ansible_playbook_python }} {{ dga.cmd|default('dga.py') }} >domain_list.ndjson"
+    executable: "/bin/sh"
+    chdir: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}"
+ 
+- name: "Convert {{ dga.name }} output to bulk ingest"
+  replace:
+    path: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}/domain_list.ndjson"
+    regexp: '^(\S+\w).*\n'
+    replace: |
+      { "update": { "_index": "{{ corpus_index }}", "_id": "\1" } }
+      { "doc": {"domain": "\1", "is_dga": true, "dga_name": "{{ dga.name }}" }, "doc_as_upsert": true }
+
+- name: "Index to {{ corpus_index }} for {{ dga.name }}"
+  uri:
+    url: "{{ elasticsearch_url }}/_bulk"
+    method: POST
+    src: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}/domain_list.ndjson"
+    remote_src: true
+    headers:
+      Content-Type: "application/x-ndjson"
+      Accept: "application/json"
+    url_username: elastic
+    url_password: "{{ el_cloud_pw }}"
+    force_basic_auth: true
+    timeout: 600
+    return_content: true
+  register: result
+  ignore_errors: true
+
+- name: Dump result
+  debug: var=result verbosity=1

@@ -1,0 +1,58 @@
+---
+
+# These (sub-)tasks will take a Top 1M domain list and ingest it
+
+- name: "Check {{ top1m_name }} dir"
+  file: path="{{ workdir }}/{{ top1m_name }}" state=directory
+
+- name: "Fetch {{ top1m_name}} Top 1M"
+  unarchive:
+    src: "{{ top1m_url }}"
+    dest: "{{ workdir }}/{{ top1m_name }}"
+    creates: "{{ workdir }}/{{ top1m_name }}/top-1m.csv"
+    remote_src: true
+
+#- name: "Prepare {{ top1m_name }} csv for conversion"
+  #copy:
+    #src: "{{ workdir }}/{{ top1m_name }}/top-1m.csv"
+    #dest: "{{ workdir }}/{{ top1m_name }}/top-1m.ndjson"
+    #remote_src: true
+
+- name: "Prepare {{ top1m_name }} csv for conversion"
+  command:
+    cmd: split -l 100000 -a 5 top-1m.csv
+    chdir: "{{ workdir }}/{{ top1m_name }}"
+
+- name: "Convert {{ top1m_name }} file to bulk ingest body"
+  replace:
+    path: "{{ item }}"
+    regexp: '^(\d+),(\S+)\s*\n'
+    replace: |
+      { "update": { "_index": "{{ corpus_index }}", "_id": "\2" } }
+      { "doc": { "domain": "\2", "is_dga": false, "{{ top1m_name|lower }}_rank": \1 }, "doc_as_upsert": true }
+  loop: "{{ lookup('fileglob', workdir~'/'~top1m_name~'/xa*', wantlist=True) }}"
+  loop_control:
+    label: "{{ top1m_name }}/{{ item | basename }}"
+
+- name: "Index {{ top1m_name }} to {{ corpus_index }}"
+  uri:
+    url: "{{ elasticsearch_url }}/_bulk"
+    method: POST
+    src: "{{ item }}"
+    remote_src: true
+    headers:
+      Content-Type: "application/x-ndjson"
+      Accept: "application/json"
+    url_username: elastic
+    url_password: "{{ el_cloud_pw }}"
+    force_basic_auth: true
+    timeout: 600
+    return_content: false #Take python/ansible too long to process...
+  register: result
+  ignore_errors: true
+  loop: "{{ lookup('fileglob', workdir~'/'~top1m_name~'/xa*', wantlist=True) }}"
+  loop_control:
+    label: "{{ top1m_name }}/{{ item | basename }}"
+
+- name: Dump result
+  debug: var=result verbosity=1

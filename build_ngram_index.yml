@@ -1,0 +1,100 @@
+---
+
+- hosts: all
+  vars:
+    # Big Thanks to "@baderj" for https://github.com/baderj/domain_generation_algorithms
+    dga_gen_url: https://github.com/baderj/domain_generation_algorithms/archive/master.zip
+    workdir: "{{ lookup('env', 'TMPDIR') }}/el-demo"
+    el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
+    corpus_index: "domain_corpus"
+    some_hex: "15facade"
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+  tasks:
+
+  - name: Check arguments
+    fail:
+    when: not el_cloud_id or not el_cloud_pw
+    tags:
+    - always
+
+  - name: Set variables
+    set_fact:
+      elasticsearch_url: "https://{{ el_cloud_info.split('$')[1] }}.{{ el_cloud_info.split('$')[0] }}"
+      kibana_url: "https://{{ el_cloud_info.split('$')[2] }}.{{ el_cloud_info.split('$')[0] }}"
+    tags:
+    - always
+
+  - name: "Check working dir: {{ workdir }}"
+    file: path="{{ workdir }}" state=directory mode=0775
+    tags:
+    - always 
+    
+  - name: "Create/Update ngram extractor script"
+    uri:
+      url: "{{ elasticsearch_url }}/_scripts/ngram-extractor "
+      method: POST
+      body_type: json
+      body:
+        script:
+          lang: painless
+          source: |
+            String subdomain = ctx[params.field].splitOnToken('.')[0];
+            String ngram_field = params.field+'_'+Integer.toString(params.ngram_len)+'gram';
+      
+            for (int i=0;i<=subdomain.length()-params.ngram_len;i++){ 
+        
+              if (! ctx.containsKey(ngram_field)) {
+                ctx[ngram_field] = new HashMap();
+              }
+              
+              ctx[ngram_field][Integer.toString(i)] = 
+                subdomain.substring(i, i+params.ngram_len);
+            } 
+      headers:
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 600
+      return_content: false #Take python/ansible too long to process...
+    register: result
+
+  - name: Dump result
+    debug: var=result verbosity=1
+  
+  - name: "Create/Update ngram expander pipeline"
+    uri:
+      url: "{{ elasticsearch_url }}/_ingest/pipeline/dga_ngram_expander"
+      method: PUT
+      body_type: json
+      body:
+        description: Expands a domain into ngrams
+        processors:
+        - script:
+            id: ngram-extractor
+            params:
+              ngram_len: 1
+              field: domain
+        - script:
+            id: ngram-extractor
+            params:
+              ngram_len: 2
+              field: domain
+        - script:
+            id: ngram-extractor
+            params:
+              ngram_len: 3
+              field: domain
+      headers:
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 600
+      return_content: false #Take python/ansible too long to process...
+    register: result
+
+  - name: Dump result
+    debug: var=result verbosity=1

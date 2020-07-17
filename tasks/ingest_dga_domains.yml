@@ -1,0 +1,204 @@
+---
+
+# These (sub-)tasks will download and execute various DGA generators
+# Thereafter the results will be ingested
+
+- name: "Fetch Domain Generation Algorithms (DGA)"
+  unarchive:
+    src: "{{ dga_gen_url }}"
+    dest: "{{ workdir }}"
+    creates: "{{ workdir }}/domain_generation_algorithms-master"
+    remote_src: true
+
+# Those commented out either if python errors (i.e. fail)
+# or behave in a way that deviates from the DGA scripts, so need special handling
+# IF 'cmd' is omitted, just "dga.py" is used, which covers a lot of cases
+- name: Interate over DGAs
+  include_tasks: process_dga.yml
+  loop_control:
+    loop_var: dga
+    label: "{{ dga.name }}"
+  loop:
+  - name: banjori
+  - name: bazarbackdoor
+#  - name: chinad
+  - name: corebot
+#  - name: dircrypt
+#    cmd: dga.py DEADBEEF
+  - name: dnschanger
+    cmd: dga.py 1234567890
+  - name: fobber
+    cmd: dga.py 1
+  - name: fobber
+    cmd: dga.py 2
+  - name: fosniw
+  - name: gozi
+    cmd: dga.py -w luther
+  - name: gozi
+    cmd: dga.py -w rfc4343
+  - name: gozi
+    cmd: dga.py -w nasa
+  - name: gozi
+    cmd: dga.py -w gpl
+  - name: kraken
+    cmd: v1/dga_v1.py
+  - name: kraken
+    cmd: v2/dga_v2.py -t 1
+  - name: kraken
+    cmd: v2/dga_v2.py -t 2
+  - name: locky
+    cmd: dgav2.py -c 1
+  - name: locky
+    cmd: dgav2.py -c 2
+  - name: locky
+    cmd: dgav2.py -c 3
+  - name: locky
+    cmd: dgav2.py -c 4
+  - name: locky
+    cmd: dgav2.py -c 5
+  - name: locky
+    cmd: dgav2.py -c 6
+  - name: locky
+    cmd: dgav2.py -c 7
+  - name: locky
+    cmd: dgav3.py -c 1
+  - name: locky
+    cmd: dgav3.py -c 2
+  - name: locky
+    cmd: dgav3.py -c 3
+  - name: locky
+    cmd: dgav3.py -c 4
+  - name: locky
+    cmd: dgav3.py -c 5
+  - name: locky
+    cmd: dgav3.py -c 6
+  - name: locky
+    cmd: dgav3.py -c 7
+  - name: locky
+    cmd: dgav3.py -c 8
+  - name: locky
+    cmd: dgav3.py -c 9
+  - name: locky
+    cmd: dgav3.py -c 10
+  - name: locky
+    cmd: dgav3.py -c 11
+  - name: locky
+    cmd: dgav3.py -c 12
+  - name: locky
+    cmd: dgav3.py -c 13
+  - name: locky
+    cmd: dgav3.py -c 14
+  - name: locky
+    cmd: dgav3.py -c 15
+  - name: locky
+    cmd: dgav3.py -c 16
+  - name: locky
+    cmd: dgav3.py -c 17
+  - name: locky
+    cmd: dgav3.py -c 18
+  - name: locky
+    cmd: dgav3.py -c 19
+  - name: locky
+    cmd: dgav3.py -c 20
+  - name: monerodownloader
+#  - name: murofet
+#    cmd: v1/dga.py
+#  - name: murofet
+#    cmd: v2/dga.py
+#  - name: murofet
+#    cmd: v3/dga.py
+  - name: mydoom
+    cmd: dga.py -n 1000
+  - name: necurs
+#  - name: newgoz
+  - name: nymaim
+    cmd: dga.py -n 1000
+  - name: nymaim2
+  - name: padcrypt
+    cmd: dga.py -v 2.2.86.1
+  - name: padcrypt
+    cmd: dga.py -v 2.2.97.0
+#  - name: pitou #FIXME clean output
+#  - name: pizd
+  - name: proslikefan
+  - name: pushdo
+    cmd: dga.py -c kz_v1
+  - name: pushdo
+    cmd: dga.py -c com_v1
+  - name: pushdo
+    cmd: dga.py -c kz_v2
+#  - name: pykspa #FIXME subdir
+  - name: qadars
+    cmd: dga.py -s 89f5
+  - name: qadars
+    cmd: dga.py -s 4449
+  - name: qadars
+    cmd: dga.py -s E1F1
+  - name: qadars
+    cmd: dga.py -s E1F2
+  - name: qadars
+    cmd: dga.py -s E08A
+  - name: qadars
+    cmd: dga.py -s E1F5
+  - name: qakbot
+    cmd: dga.py -m 0
+  - name: qakbot
+    cmd: dga.py -m 1
+  - name: qakbot
+    cmd: dga.py -s -m 0
+  - name: qakbot
+    cmd: dga.py -s -m 1
+  - name: qsnatch
+    cmd: dga_a.py
+  - name: qsnatch
+    cmd: dga_b.py
+#  - name: ramdo
+  - name: ramnit
+    cmd: "dga.py {{ some_hex }} 2000"
+  - name: ramnit
+    cmd: dga.py 12345678 2000
+  - name: ranbyus
+    cmd: september/ranbyus_reloaded.py
+  - name: reconyc
+  - name: shiotob
+    cmd: "dga.py {{ some_hex }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ some_hex }}.net"
+  - name: simda
+#  - name: sisron
+  - name: suppobox
+    cmd: dga.py 1
+  - name: suppobox
+    cmd: dga.py 2
+  - name: suppobox
+    cmd: dga.py 3
+  - name: symmi
+  - name: tempedreve
+  - name: tinba
+  - name: unknown_malware
+    cmd: dga.py sn
+  - name: unknown_malware
+    cmd: dga.py al
+  - name: unnamed_downloader
+  - name: unnamed_javascript_dga
+  - name: vawtrak
+    cmd: "dga.py {{ some_hex }}"
+  - name: vawtrak
+    cmd: dga2.py -s 0x5542b2 -n 2000
+  - name: vawtrak
+    cmd: dga2.py -s 0x5884c3c4 -n 2000
+  - name: vawtrak
+    cmd: dga3.py -s 874c49 -n 2000
+  - name: vawtrak
+    cmd: dga3.py -s 3cdca1 -n 2000
+  - name: zloader
+    cmd: dga.py -r q23Cud3xsNf3
+  - name: zloader
+    cmd: dga.py -r 41997b4a729e1a0175208305170752dd
+  - name: zloader
+    cmd: dga.py -r kZieCw23gffpe43Sd
+  - name: zloader
+    cmd: dga.py -r Ts72YjsjO5TghE6m
+
+
+    
