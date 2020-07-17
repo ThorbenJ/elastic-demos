@@ -40,17 +40,14 @@
         script:
           lang: painless
           source: |
-            String subdomain = ctx[params.field].splitOnToken('.')[0];
+            //String domain = ctx[params.field].splitOnToken('.')[0];
+            String domain = ctx[params.field].replace('.', '');
+            
             String ngram_field = params.field+'_'+Integer.toString(params.ngram_len)+'gram';
+            ctx[ngram_field] = new ArrayList();
       
-            for (int i=0;i<=subdomain.length()-params.ngram_len;i++){ 
-        
-              if (! ctx.containsKey(ngram_field)) {
-                ctx[ngram_field] = new HashMap();
-              }
-              
-              ctx[ngram_field][Integer.toString(i)] = 
-                subdomain.substring(i, i+params.ngram_len);
+            for (int i=0; i<=domain.length()-params.ngram_len; i++){ 
+              ctx[ngram_field].add( domain.substring(i, i+params.ngram_len) );
             } 
       headers:
         Accept: "application/json"
