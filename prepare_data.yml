@@ -2,6 +2,10 @@
 
 # The purpose of this Ansible playbook is to create and populate an Elasticsearch
 # index with "normal" and "dga" domain, to use as a corpus for Machine Learning
+#
+# All this was inspired by a blog series from @Winterflower
+# See: https://github.com/elastic/examples/tree/master/Machine%20Learning/DGA%20Detection
+#
 
 - hosts: all
   vars:
@@ -10,7 +14,10 @@
     workdir: "{{ lookup('env', 'TMPDIR') }}/el-demo"
     el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
     corpus_index: "domain_corpus"
-    some_hex: "15facade"
+    day_range: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28] #Valid for all possible months
+    month_range: [1,2,3,4,5,6,7,8,9,10,11,12]
+    int_range: ['0','1','2','3','4','5','6','7','8','9']
+    hex_range: ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
 

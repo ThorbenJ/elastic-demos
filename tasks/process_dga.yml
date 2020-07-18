@@ -1,10 +1,24 @@
 ---
 
+- name: Clear last run
+  copy:
+    dest: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}/domain_list.ndjson"
+    content: ""
+
 - name: "Run dga: {{ dga.name }}"
   shell: # noqa 301
-    cmd: "{{ ansible_playbook_python }} {{ dga.cmd|default('dga.py') }} >domain_list.ndjson"
+    cmd: "{{ ansible_playbook_python }} {{ dga.cmd|default('dga.py') }} >>domain_list.ndjson"
     executable: "/bin/sh"
     chdir: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}"
+  when: dga.dates is not defined
+
+- name: "Run dga: {{ dga.name }} with date iteration"
+  shell: # noqa 301
+    cmd: "{{ ansible_playbook_python }} {{ dga.cmd|default('dga.py') }} {{ dga.dates }} {{ item }} >>domain_list.ndjson"
+    executable: "/bin/sh"
+    chdir: "{{ workdir }}/domain_generation_algorithms-master/{{ dga.name }}"
+  loop: "{{ dga_date_list }}"
+  when: dga.dates is defined
 
 - name: "Convert {{ dga.name }} output to bulk ingest"
   replace:

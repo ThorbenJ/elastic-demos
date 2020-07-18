@@ -12,12 +12,6 @@
     creates: "{{ workdir }}/{{ top1m_name }}/top-1m.csv"
     remote_src: true
 
-#- name: "Prepare {{ top1m_name }} csv for conversion"
-  #copy:
-    #src: "{{ workdir }}/{{ top1m_name }}/top-1m.csv"
-    #dest: "{{ workdir }}/{{ top1m_name }}/top-1m.ndjson"
-    #remote_src: true
-
 - name: "Prepare {{ top1m_name }} csv for conversion"
   command: # noqa 301
     cmd: split -l 100000 -a 5 top-1m.csv

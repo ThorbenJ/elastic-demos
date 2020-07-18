@@ -2,6 +2,43 @@
 
 # These (sub-)tasks will download and execute various DGA generators
 # Thereafter the results will be ingested
+- name: Set defaults
+  set_fact:
+    dga_date_list:
+    - "{{ ansible_date_time.date }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
+    dga_hex_list:
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    dga_int_list:
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+
+
 
 - name: "Fetch Domain Generation Algorithms (DGA)"
   unarchive:
@@ -13,6 +50,9 @@
 # Those commented out either if python errors (i.e. fail)
 # or behave in a way that deviates from the DGA scripts, so need special handling
 # IF 'cmd' is omitted, just "dga.py" is used, which covers a lot of cases
+#
+# The seeds arguments are so inconsistent, it was just easier to loop-unroll (copy-paste)
+# for those that had seed arguments
 - name: Interate over DGAs
   include_tasks: process_dga.yml
   loop_control:
@@ -21,159 +61,337 @@
   loop:
   - name: banjori
   - name: bazarbackdoor
+    dates: -d
 #  - name: chinad
+#    dates: -d
   - name: corebot
+    cmd: dga.py -n 5000
+    dates: -d
 #  - name: dircrypt
-#    cmd: dga.py DEADBEEF
+#    cmd: dga.py
   - name: dnschanger
-    cmd: dga.py 1234567890
+    cmd: "dga.py {{ dga_int_list[0] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[1] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[2] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[3] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[4] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[5] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[6] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[7] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[8] }}"
+  - name: dnschanger
+    cmd: "dga.py {{ dga_int_list[9] }}"
   - name: fobber
     cmd: dga.py 1
   - name: fobber
     cmd: dga.py 2
   - name: fosniw
+    cmd: dga.py --prefix winsoft
+  - name: fosniw
+    cmd: dga.py --prefix koreasys
   - name: gozi
     cmd: dga.py -w luther
+    dates: -d
   - name: gozi
     cmd: dga.py -w rfc4343
+    dates: -d
   - name: gozi
     cmd: dga.py -w nasa
+    dates: -d
   - name: gozi
     cmd: dga.py -w gpl
+    dates: -d
   - name: kraken
-    cmd: v1/dga_v1.py
+    cmd: v1/dga_v1.py -s a
   - name: kraken
-    cmd: v2/dga_v2.py -t 1
+    cmd: v1/dga_v1.py -s b
   - name: kraken
-    cmd: v2/dga_v2.py -t 2
+    cmd: v2/dga_v2.py -t 1 -s a
+    dates: -d
+  - name: kraken
+    cmd: v2/dga_v2.py -t 2 -s a
+    dates: -d
+  - name: kraken
+    cmd: v2/dga_v2.py -t 1 -s b
+    dates: -d
+  - name: kraken
+    cmd: v2/dga_v2.py -t 2 -s b
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 1
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 2
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 3
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 4
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 5
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 6
+    dates: -d
   - name: locky
     cmd: dgav2.py -c 7
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 1
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 2
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 3
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 4
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 5
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 6
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 7
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 8
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 9
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 10
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 11
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 12
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 13
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 14
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 15
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 16
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 17
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 18
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 19
+    dates: -d
   - name: locky
     cmd: dgav3.py -c 20
+    dates: -d
   - name: monerodownloader
+    dates: -d
 #  - name: murofet
 #    cmd: v1/dga.py
+#    dates: -d
 #  - name: murofet
 #    cmd: v2/dga.py
+#    dates: -d
 #  - name: murofet
 #    cmd: v3/dga.py
+#    dates: -d
   - name: mydoom
-    cmd: dga.py -n 1000
+    cmd: dga.py -n 5000
+    dates: -d
   - name: necurs
+    dates: -d
+  - name: necurs
+    cmd: dga_different_params.py
+    dates: -d
 #  - name: newgoz
+#    cmd: dga.py -n 5000
+#    dates: -d
   - name: nymaim
-    cmd: dga.py -n 1000
+    cmd: dga.py -n 5000
+    dates: -d
   - name: nymaim2
+    dates: -d
   - name: padcrypt
     cmd: dga.py -v 2.2.86.1
+    dates: -d
   - name: padcrypt
     cmd: dga.py -v 2.2.97.0
+    dates: -d
 #  - name: pitou #FIXME clean output
 #  - name: pizd
-  - name: proslikefan
+  - name: proslikefan #FIXME iterate Magic and tlds
+    dates: -d
   - name: pushdo
     cmd: dga.py -c kz_v1
+    dates: -d
   - name: pushdo
     cmd: dga.py -c com_v1
+    dates: -d
   - name: pushdo
     cmd: dga.py -c kz_v2
+    dates: -d
 #  - name: pykspa #FIXME subdir
   - name: qadars
     cmd: dga.py -s 89f5
+    dates: -d
   - name: qadars
     cmd: dga.py -s 4449
+    dates: -d
   - name: qadars
     cmd: dga.py -s E1F1
+    dates: -d
   - name: qadars
     cmd: dga.py -s E1F2
+    dates: -d
   - name: qadars
     cmd: dga.py -s E08A
+    dates: -d
   - name: qadars
     cmd: dga.py -s E1F5
+    dates: -d
   - name: qakbot
-    cmd: dga.py -m 0
+    cmd: dga.py -m 0 -n 5000
+    dates: -d
   - name: qakbot
-    cmd: dga.py -m 1
+    cmd: dga.py -m 1 -n 5000
+    dates: -d
   - name: qakbot
-    cmd: dga.py -s -m 0
+    cmd: dga.py -s -m 0 -n 5000
+    dates: -d
   - name: qakbot
-    cmd: dga.py -s -m 1
-  - name: qsnatch
+    cmd: dga.py -s -m 1 -n 5000
+    dates: -d
+  - name: qsnatch #FIXME datetime
     cmd: dga_a.py
-  - name: qsnatch
+  - name: qsnatch #FIXME datetime
     cmd: dga_b.py
 #  - name: ramdo
   - name: ramnit
-    cmd: "dga.py {{ some_hex }} 2000"
+    cmd: "dga.py {{ dga_hex_list[0] }} 5000"
   - name: ramnit
-    cmd: dga.py 12345678 2000
+    cmd: "dga.py {{ dga_hex_list[1] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[2] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[3] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[4] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[5] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[6] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[7] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[8] }} 5000"
+  - name: ramnit
+    cmd: "dga.py {{ dga_hex_list[9] }} 5000"
   - name: ranbyus
-    cmd: september/ranbyus_reloaded.py
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[0] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[1] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[2] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[3] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[4] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[5] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[6] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[7] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[8] }}"
+    dates: -d
+  - name: ranbyus
+    cmd: "september/ranbyus_reloaded.py -s {{ dga_hex_list[9] }}"
+    dates: -d
   - name: reconyc
   - name: shiotob
-    cmd: "dga.py {{ some_hex }}.com"
+    cmd: "dga.py {{ dga_hex_list[0]|b64encode }}.com"
   - name: shiotob
-    cmd: "dga.py {{ some_hex }}.net"
+    cmd: "dga.py {{ dga_hex_list[1]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[2]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[3]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[4]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[5]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[6]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[7]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[8]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[9]|b64encode }}.com"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[0]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[1]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[2]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[3]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[4]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[5]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[6]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[7]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[8]|b64encode }}.net"
+  - name: shiotob
+    cmd: "dga.py {{ dga_hex_list[9]|b64encode }}.net"
   - name: simda
 #  - name: sisron
-  - name: suppobox
+#    dates: -d
+  - name: suppobox #FIXME datetime
     cmd: dga.py 1
-  - name: suppobox
+  - name: suppobox #FIXME datetime
     cmd: dga.py 2
-  - name: suppobox
+  - name: suppobox #FIXME datetime
     cmd: dga.py 3
   - name: symmi
+    dates: -d
   - name: tempedreve
+    dates: -d
   - name: tinba
   - name: unknown_malware
     cmd: dga.py sn
@@ -181,24 +399,74 @@
     cmd: dga.py al
   - name: unnamed_downloader
   - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[0]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[1]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[2]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[3]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[4]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[5]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[6]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[7]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[8]|b64encode }}"
+    dates: -d
+  - name: unnamed_javascript_dga
+    cmd: "dga.py -s {{ dga_hex_list[9]|b64encode }}"
+    dates: -d
   - name: vawtrak
-    cmd: "dga.py {{ some_hex }}"
+    cmd: "dga.py {{ dga_hex_list[0] }}"
   - name: vawtrak
-    cmd: dga2.py -s 0x5542b2 -n 2000
+    cmd: "dga.py {{ dga_hex_list[1] }}"
   - name: vawtrak
-    cmd: dga2.py -s 0x5884c3c4 -n 2000
+    cmd: "dga.py {{ dga_hex_list[2] }}"
   - name: vawtrak
-    cmd: dga3.py -s 874c49 -n 2000
+    cmd: "dga.py {{ dga_hex_list[3] }}"
   - name: vawtrak
-    cmd: dga3.py -s 3cdca1 -n 2000
+    cmd: "dga.py {{ dga_hex_list[4] }}"
+  - name: vawtrak
+    cmd: "dga.py {{ dga_hex_list[5] }}"
+  - name: vawtrak
+    cmd: "dga.py {{ dga_hex_list[6] }}"
+  - name: vawtrak
+    cmd: "dga.py {{ dga_hex_list[7] }}"
+  - name: vawtrak
+    cmd: "dga.py {{ dga_hex_list[8] }}"
+  - name: vawtrak
+    cmd: "dga.py {{ dga_hex_list[9] }}"
+  - name: vawtrak
+    cmd: dga2.py -s 0x5542b2 -n 5000
+  - name: vawtrak
+    cmd: dga2.py -s 0x5884c3c4 -n 5000
+  - name: vawtrak
+    cmd: dga3.py -s 874c49 -n 5000
+  - name: vawtrak
+    cmd: dga3.py -s 3cdca1 -n 5000
   - name: zloader
     cmd: dga.py -r q23Cud3xsNf3
   - name: zloader
     cmd: dga.py -r 41997b4a729e1a0175208305170752dd
+    dates: -d
   - name: zloader
     cmd: dga.py -r kZieCw23gffpe43Sd
+    dates: -d
   - name: zloader
     cmd: dga.py -r Ts72YjsjO5TghE6m
+    dates: -d
 
 
 
