@@ -16,27 +16,27 @@
     - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
     - "{{ range(2010, ansible_date_time.year|int)|random }}-{{ '%02d'|format(month_range|random|int) }}-{{ '%02d'|format(day_range|random|int) }}"
     dga_hex_list:
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
-    - "{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}{{ hex_range|random }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
+    - "{{ '%08x'|format(num_max|random) }}"
     dga_int_list:
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
-    - "{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}{{ int_range|random }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
+    - "{{ '%08d'|format(num_max|random) }}"
 
 
 
@@ -47,9 +47,11 @@
     creates: "{{ workdir }}/domain_generation_algorithms-master"
     remote_src: true
 
-# Those commented out either if python errors (i.e. fail)
-# or behave in a way that deviates from the DGA scripts, so need special handling
-# IF 'cmd' is omitted, just "dga.py" is used, which covers a lot of cases
+# Those commented out are either due to python errors (i.e. fail)
+# or behave in a way that deviates from the other DGA scripts, so need special handling
+# IF 'cmd' is omitted, just "dga.py" is used, which covers a few cases
+# 'dates' should be set if the dga accepts dates as yyyy-mm-dd 
+# with the appropriate argument ('-d' or '' mostly)
 #
 # The seeds arguments are so inconsistent, it was just easier to loop-unroll (copy-paste)
 # for those that had seed arguments
@@ -342,43 +344,23 @@
   - name: shiotob
     cmd: "dga.py {{ dga_hex_list[0]|b64encode }}.com"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[1]|b64encode }}.com"
+    cmd: "dga.py {{ dga_hex_list[1]|b64encode }}.net"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[2]|b64encode }}.com"
+    cmd: "dga.py {{ dga_hex_list[2]|b64encode }}.org"
   - name: shiotob
     cmd: "dga.py {{ dga_hex_list[3]|b64encode }}.com"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[4]|b64encode }}.com"
+    cmd: "dga.py {{ dga_hex_list[4]|b64encode }}.net"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[5]|b64encode }}.com"
+    cmd: "dga.py {{ dga_hex_list[5]|b64encode }}.org"
   - name: shiotob
     cmd: "dga.py {{ dga_hex_list[6]|b64encode }}.com"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[7]|b64encode }}.com"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[8]|b64encode }}.com"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[9]|b64encode }}.com"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[0]|b64encode }}.net"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[1]|b64encode }}.net"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[2]|b64encode }}.net"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[3]|b64encode }}.net"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[4]|b64encode }}.net"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[5]|b64encode }}.net"
-  - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[6]|b64encode }}.net"
-  - name: shiotob
     cmd: "dga.py {{ dga_hex_list[7]|b64encode }}.net"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[8]|b64encode }}.net"
+    cmd: "dga.py {{ dga_hex_list[8]|b64encode }}.org"
   - name: shiotob
-    cmd: "dga.py {{ dga_hex_list[9]|b64encode }}.net"
+    cmd: "dga.py {{ dga_hex_list[9]|b64encode }}.com"
   - name: simda
 #  - name: sisron
 #    dates: -d

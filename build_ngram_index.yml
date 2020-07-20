@@ -2,12 +2,11 @@
 
 - hosts: all
   vars:
-    # Big Thanks to "@baderj" for https://github.com/baderj/domain_generation_algorithms
-    dga_gen_url: https://github.com/baderj/domain_generation_algorithms/archive/master.zip
     workdir: "{{ lookup('env', 'TMPDIR') }}/el-demo"
     el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
     corpus_index: "domain_corpus"
-    some_hex: "15facade"
+    ngram_index: "domain_ngram"
+    array_ngrams: false
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
@@ -29,11 +28,12 @@
   - name: "Check working dir: {{ workdir }}"
     file: path="{{ workdir }}" state=directory mode=0775
     tags:
-    - always 
-    
-  - name: "Create/Update ngram extractor script"
+    - always
+
+    # One (array of strings) field per ngram (length)
+  - name: "Create/Update ngram extractor script (array)"
     uri:
-      url: "{{ elasticsearch_url }}/_scripts/ngram-extractor "
+      url: "{{ elasticsearch_url }}/_scripts/ngram-extractor"
       method: POST
       body_type: json
       body:
@@ -45,10 +45,10 @@
             
             String ngram_field = params.field+'_'+Integer.toString(params.ngram_len)+'gram';
             ctx[ngram_field] = new ArrayList();
-      
-            for (int i=0; i<=domain.length()-params.ngram_len; i++){ 
+            
+            for (int i=0; i<=domain.length()-params.ngram_len; i++){
               ctx[ngram_field].add( domain.substring(i, i+params.ngram_len) );
-            } 
+            }
       headers:
         Accept: "application/json"
       url_username: elastic
@@ -57,10 +57,43 @@
       timeout: 600
       return_content: false #Take python/ansible too long to process...
     register: result
+    when: array_ngrams
+
+    # Separate (string) fields for each individual ngram
+  - name: "Create/Update ngram extractor script (object)"
+    uri:
+      url: "{{ elasticsearch_url }}/_scripts/ngram-extractor"
+      method: POST
+      body_type: json
+      body:
+        script:
+          lang: painless
+          source: |
+            //String domain = ctx[params.field].splitOnToken('.')[0];
+            String domain = ctx[params.field].replace('.', '');
+            
+            String ngram_field = params.field+'_'+Integer.toString(params.ngram_len)+'gram';
+            ctx[ngram_field] = new HashMap();
+            
+            for (int i=0;i<=domain.length()-params.ngram_len;i++){
+              if (i>25) break; // limit to 26 ngrams, max. (a to z)
+            
+              ctx[ngram_field][Character.toString((char)(i+97))] =
+                domain.substring(i, i+params.ngram_len);
+            }
+      headers:
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 600
+      return_content: false #Take python/ansible too long to process...
+    register: result
+    when: not array_ngrams
 
   - name: Dump result
     debug: var=result verbosity=1
-  
+
   - name: "Create/Update ngram expander pipeline"
     uri:
       url: "{{ elasticsearch_url }}/_ingest/pipeline/dga_ngram_expander"
@@ -84,6 +117,29 @@
             params:
               ngram_len: 3
               field: domain
+      headers:
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 600
+      return_content: false #Take python/ansible too long to process...
+    register: result
+
+  - name: Dump result
+    debug: var=result verbosity=1
+
+  - name: "Re-index"
+    uri:
+      url: "{{ elasticsearch_url }}/_reindex?slices=2&wait_for_completion=false"
+      method: POST
+      body_type: json
+      body:
+        source:
+          index: "{{ corpus_index }}"
+        dest:
+          index: "{{ ngram_index }}"
+          pipeline: dga_ngram_expander
       headers:
         Accept: "application/json"
       url_username: elastic

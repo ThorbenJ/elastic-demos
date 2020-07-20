@@ -12,6 +12,12 @@
     creates: "{{ workdir }}/{{ top1m_name }}/top-1m.csv"
     remote_src: true
 
+- name: Clean old run
+  file: path={{ item }} state=absent
+  loop: "{{ lookup('fileglob', workdir~'/'~top1m_name~'/xa*', wantlist=True) }}"
+  loop_control:
+    label: "{{ top1m_name }}/{{ item | basename }}"
+    
 - name: "Prepare {{ top1m_name }} csv for conversion"
   command: # noqa 301
     cmd: split -l 100000 -a 5 top-1m.csv
@@ -43,7 +49,6 @@
     timeout: 600
     return_content: false #Take python/ansible too long to process...
   register: result
-  ignore_errors: true
   loop: "{{ lookup('fileglob', workdir~'/'~top1m_name~'/xa*', wantlist=True) }}"
   loop_control:
     label: "{{ top1m_name }}/{{ item | basename }}"
