@@ -34,7 +34,7 @@
     - always
 
     # One (array of strings) field per ngram (length)
-  - name: "Create/Update ngram extractor script (array)"
+  - name: "Create/Update ngram extractor script (array): ngram-extractor"
     uri:
       url: "{{ elasticsearch_url }}/_scripts/ngram-extractor"
       method: POST
@@ -57,7 +57,7 @@
       url_username: elastic
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
-      timeout: 600
+      timeout: 60
       return_content: false #Take python/ansible too long to process...
     register: result
     when: array_ngrams
@@ -65,7 +65,7 @@
     - script
 
     # Separate (string) fields for each individual ngram
-  - name: "Create/Update ngram extractor script (object)"
+  - name: "Create/Update ngram extractor script (object): ngram-extractor"
     uri:
       url: "{{ elasticsearch_url }}/_scripts/ngram-extractor"
       method: POST
@@ -91,7 +91,7 @@
       url_username: elastic
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
-      timeout: 600
+      timeout: 60
       return_content: false #Take python/ansible too long to process...
     register: result
     when: not array_ngrams
@@ -103,7 +103,7 @@
     tags:
     - script
 
-  - name: "Create/Update ngram expander pipeline"
+  - name: "Create/Update ngram expander pipeline: dga_ngram_expander"
     uri:
       url: "{{ elasticsearch_url }}/_ingest/pipeline/dga_ngram_expander"
       method: PUT
@@ -131,7 +131,7 @@
       url_username: elastic
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
-      timeout: 600
+      timeout: 60
       return_content: false #Take python/ansible too long to process...
     register: result
     tags:
@@ -142,7 +142,8 @@
     tags:
     - pipeline
 
-  - name: Remove old index
+  # If run more than once on the same day
+  - name: Remove old ngram index
     uri:
       url: "{{ elasticsearch_url }}/{{ ngram_index }}"
       method: DELETE
@@ -151,7 +152,7 @@
       url_username: elastic
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
-      timeout: 600
+      timeout: 60
       status_code: [200,201,404]
       return_content: false #Take python/ansible too long to process...
     register: result
@@ -164,7 +165,7 @@
     tags:
     - rem_old
 
-  - name: "Re-index"
+  - name: "Re-index {{ corpus_index }} to {{ ngram_index }} with pipeline dga_ngram_expander"
     uri:
       url: "{{ elasticsearch_url }}/_reindex?slices=2&wait_for_completion=false"
       method: POST
@@ -180,7 +181,7 @@
       url_username: elastic
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
-      timeout: 600
+      timeout: 60
       return_content: false #Take python/ansible too long to process...
     register: ri_result
     tags:
@@ -191,7 +192,7 @@
     tags:
     - reindex
     
-  - name: Wait for re-index completion
+  - name: "Wait for re-index of {{ ngram_index }} to complete"
     uri:
       url: "{{ elasticsearch_url }}/_tasks/{{ ri_result.json.task }}"
       method: GET
@@ -208,3 +209,30 @@
     retries: 100
     tags:
     - reindex_wait
+    
+  - name: "Add Kibana index pattern for {{ ngram_index }}"
+    uri:
+      url: "{{ kibana_url }}/api/saved_objects/index-pattern/{{ ngram_index }}"
+      method: POST
+      body_format: json
+      body:
+        attributes:
+          title: "{{ ngram_index }}"
+      headers:
+        kbn-xsrf: true
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 60
+      status_code: [200,201,409]
+      return_content: false #Take python/ansible too long to process...
+    changed_when: result.status != 409
+    register: result
+    tags:
+    - index_pattern
+
+  - name: Dump result
+    debug: var=result verbosity=1
+    tags:
+    - index_pattern

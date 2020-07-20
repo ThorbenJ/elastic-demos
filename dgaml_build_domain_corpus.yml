@@ -87,3 +87,31 @@
       dga_gen_url: https://github.com/baderj/domain_generation_algorithms/archive/master.zip
     tags:
     - dga
+
+  - name: "Add Kibana index pattern for {{ corpus_index }}"
+    uri:
+      url: "{{ kibana_url }}/api/saved_objects/index-pattern/{{ corpus_index }}"
+      method: POST
+      body_format: json
+      body:
+        attributes:
+          title: "{{ corpus_index }}"
+      headers:
+        kbn-xsrf: true
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 60
+      status_code: [200,201,409]
+      return_content: false #Take python/ansible too long to process...
+    changed_when: result.status != 409
+    register: result
+    tags:
+    - index_pattern
+
+  - name: Dump result
+    debug: var=result verbosity=1
+    tags:
+    - index_pattern
+
