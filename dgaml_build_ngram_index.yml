@@ -11,8 +11,9 @@
 
   tasks:
 
-  - name: Check arguments
+  - name: Fail check
     fail:
+      msg: Requires el_cloud_id and el_cloud_pw
     when: not el_cloud_id or not el_cloud_pw
     tags:
     - always
@@ -192,6 +193,7 @@
     tags:
     - reindex
     
+    # Why not wait_for_completion=true? because the Cloud proxies will timeout!
   - name: "Wait for re-index of {{ ngram_index }} to complete"
     uri:
       url: "{{ elasticsearch_url }}/_tasks/{{ ri_result.json.task }}"
