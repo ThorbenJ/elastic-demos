@@ -2,10 +2,9 @@
 
 - hosts: all
   vars:
-    workdir: "{{ lookup('env', 'TMPDIR') }}/el-demo"
-    el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
-    corpus_index: "domain_corpus"
-    ngram_index: "domain_ngram"
+    workdir: "{{ lookup('env', 'TMPDIR')|regex_replace('/+$','') }}/dgaml-demo"
+    corpus_index_prefix: "domain_corpus"
+    ngram_index_prefix: "domain_ngram"
     array_ngrams: false
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
@@ -22,6 +21,10 @@
     set_fact:
       elasticsearch_url: "https://{{ el_cloud_info.split('$')[1] }}.{{ el_cloud_info.split('$')[0] }}"
       kibana_url: "https://{{ el_cloud_info.split('$')[2] }}.{{ el_cloud_info.split('$')[0] }}"
+      corpus_index: "{{ corpus_index|default(corpus_index_prefix~'-'~ansible_date_time.date) }}"
+      ngram_index: "{{ ngram_index|default(ngram_index_prefix~'-'~ansible_date_time.date) }}"
+    vars:
+      el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
     tags:
     - always
 
@@ -35,7 +38,7 @@
     uri:
       url: "{{ elasticsearch_url }}/_scripts/ngram-extractor"
       method: POST
-      body_type: json
+      body_format: json
       body:
         script:
           lang: painless
@@ -58,13 +61,15 @@
       return_content: false #Take python/ansible too long to process...
     register: result
     when: array_ngrams
+    tags:
+    - script
 
     # Separate (string) fields for each individual ngram
   - name: "Create/Update ngram extractor script (object)"
     uri:
       url: "{{ elasticsearch_url }}/_scripts/ngram-extractor"
       method: POST
-      body_type: json
+      body_format: json
       body:
         script:
           lang: painless
@@ -90,15 +95,19 @@
       return_content: false #Take python/ansible too long to process...
     register: result
     when: not array_ngrams
+    tags:
+    - script
 
   - name: Dump result
     debug: var=result verbosity=1
+    tags:
+    - script
 
   - name: "Create/Update ngram expander pipeline"
     uri:
       url: "{{ elasticsearch_url }}/_ingest/pipeline/dga_ngram_expander"
       method: PUT
-      body_type: json
+      body_format: json
       body:
         description: Expands a domain into ngrams
         processors:
@@ -125,15 +134,41 @@
       timeout: 600
       return_content: false #Take python/ansible too long to process...
     register: result
+    tags:
+    - pipeline
 
   - name: Dump result
     debug: var=result verbosity=1
+    tags:
+    - pipeline
+
+  - name: Remove old index
+    uri:
+      url: "{{ elasticsearch_url }}/{{ ngram_index }}"
+      method: DELETE
+      headers:
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 600
+      status_code: [200,201,404]
+      return_content: false #Take python/ansible too long to process...
+    register: result
+    changed_when: result.status != 404
+    tags:
+    - rem_old
+
+  - name: Dump result
+    debug: var=result verbosity=1
+    tags:
+    - rem_old
 
   - name: "Re-index"
     uri:
       url: "{{ elasticsearch_url }}/_reindex?slices=2&wait_for_completion=false"
       method: POST
-      body_type: json
+      body_format: json
       body:
         source:
           index: "{{ corpus_index }}"
@@ -147,7 +182,29 @@
       force_basic_auth: true
       timeout: 600
       return_content: false #Take python/ansible too long to process...
-    register: result
+    register: ri_result
+    tags:
+    - reindex
 
   - name: Dump result
-    debug: var=result verbosity=1
+    debug: var=ri_result verbosity=1
+    tags:
+    - reindex
+    
+  - name: Wait for re-index completion
+    uri:
+      url: "{{ elasticsearch_url }}/_tasks/{{ ri_result.json.task }}"
+      method: GET
+      headers:
+        Accept: "application/json"
+      url_username: elastic
+      url_password: "{{ el_cloud_pw }}"
+      force_basic_auth: true
+      timeout: 10
+      return_content: false #Take python/ansible too long to process...
+    register: result
+    until: result.json.completed
+    delay: 20
+    retries: 100
+    tags:
+    - reindex_wait
