@@ -20,12 +20,13 @@
 
   - name: Set variables
     set_fact:
-      elasticsearch_url: "https://{{ el_cloud_info.split('$')[1] }}.{{ el_cloud_info.split('$')[0] }}"
-      kibana_url: "https://{{ el_cloud_info.split('$')[2] }}.{{ el_cloud_info.split('$')[0] }}"
+      elasticsearch_url: "https://{{ el_cloud_info[1] }}.{{ el_cloud_info[0] }}"
+      kibana_url: "https://{{ el_cloud_info[2] }}.{{ el_cloud_info[0] }}"
       corpus_index: "{{ corpus_index|default(corpus_index_prefix~'-'~ansible_date_time.date) }}"
       ngram_index: "{{ ngram_index|default(ngram_index_prefix~'-'~ansible_date_time.date) }}"
     vars:
-      el_cloud_info: "{{ el_cloud_id | regex_replace('^[^:]*:', '') | b64decode }}"
+      el_cloud_info: "{{ (el_cloud_id|regex_replace('^[^:]*:','')|b64decode).split('$')|list }}"
+    failed_when: el_cloud_info|length < 3
     tags:
     - always
 
@@ -59,7 +60,7 @@
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
       timeout: 60
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     register: result
     when: array_ngrams
     tags:
@@ -93,7 +94,7 @@
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
       timeout: 60
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     register: result
     when: not array_ngrams
     tags:
@@ -133,7 +134,7 @@
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
       timeout: 60
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     register: result
     tags:
     - pipeline
@@ -155,7 +156,7 @@
       force_basic_auth: true
       timeout: 60
       status_code: [200,201,404]
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     register: result
     changed_when: result.status != 404
     tags:
@@ -183,7 +184,7 @@
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
       timeout: 60
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     register: ri_result
     tags:
     - reindex
@@ -204,7 +205,7 @@
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
       timeout: 10
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     register: result
     until: result.json.completed
     delay: 20
@@ -228,7 +229,7 @@
       force_basic_auth: true
       timeout: 60
       status_code: [200,201,409]
-      return_content: false #Take python/ansible too long to process...
+      return_content: false
     changed_when: result.status != 409
     register: result
     tags:
