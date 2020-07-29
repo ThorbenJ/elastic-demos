@@ -2,6 +2,9 @@
 {% set vals = csvdata[l]|regex_findall('\"[^\"]*\"|[^,]+')|map('regex_replace', '\"', '')|list %}
 {% set doc = dict(datainfo.header| zip(vals))|combine(datainfo) %}
 {% set _ = doc.update({'Datum': '20'~doc.Datum[6:8]~'-'~doc.Datum[:5]}) if 'Datum' is in doc %}
+{% for k,v in doc.items() %}
+{% set _ = doc.update({k: v|int}) if v|int %}
+{% endfor %}
 { "index": { "_id": "{{ (datainfo.name~csvdata[l])|hash('sha1') }}" } }
 {{ doc|to_json }}
 {% endfor %}

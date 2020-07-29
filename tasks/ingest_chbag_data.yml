@@ -3,7 +3,7 @@
 - name: Read file
   set_fact:
     csvdata: "{{ lookup('file', item.path ).splitlines()|list }}"
-    
+
 - name: Get info
   set_fact:
     datainfo:
@@ -23,7 +23,7 @@
   template:
     dest: "{{ item.path }}.ndjson"
     src: chbag_bulk_index.j2
-    
+
 - name: Ingext data
   uri:
     url: "{{ elasticsearch_url }}/{{ datainfo.index }}/_bulk"

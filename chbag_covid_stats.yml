@@ -6,7 +6,7 @@
     stats_url: "https://www.bag.admin.ch/dam/bag/de/dokumente/mt/k-und-i/aktuelle-ausbrueche-pandemien/2019-nCoV/covid-19-datengrundlage-lagebericht.xlsx.download.xlsx/200325_Datengrundlage_Grafiken_COVID-19-Bericht.xlsx"
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
-    
+
   tasks:
 
   - name: Param check
@@ -17,15 +17,16 @@
     - el_cloud_auth
     tags:
     - always
-  
+
   - name: Check python dependancies
     pip: name="{{ item }}"
     loop:
     - xlsx2csv
     tags:
     - always
+    # Ansible module seems broken on my Mac, just install manually with pip3
     ignore_errors: true
-    
+
   - name: Set variables
     set_fact:
       elasticsearch_url: "{{ elasticsearch_url |default('https://'~el_cloud_info[1]~'.'~el_cloud_info[0]) }}"
@@ -41,7 +42,8 @@
     file: path="{{ workdir }}" state=directory mode=0775
     tags:
     - always
-    
+
+  # FIXME: will want to fetch the same file again on next day..
   - name: "Fetch stats"
     get_url:
       url: "{{ stats_url }}"
