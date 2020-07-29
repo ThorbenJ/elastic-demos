@@ -1,0 +1,74 @@
+---
+
+- hosts: all
+  vars:
+    workdir: "{{ lookup('env', 'TMPDIR')|default('/var/tmp')|regex_replace('/+$','') }}/chbad_stats"
+    stats_url: "https://www.bag.admin.ch/dam/bag/de/dokumente/mt/k-und-i/aktuelle-ausbrueche-pandemien/2019-nCoV/covid-19-datengrundlage-lagebericht.xlsx.download.xlsx/200325_Datengrundlage_Grafiken_COVID-19-Bericht.xlsx"
+    ansible_connection: local
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    
+  tasks:
+
+  - name: Param check
+    fail: msg="Require var '{{ item }}' is missing."
+    when: lookup('vars', item) is not defined
+    loop:
+    - el_cloud_id
+    - el_cloud_auth
+    tags:
+    - always
+  
+  - name: Check python dependancies
+    pip: name="{{ item }}"
+    loop:
+    - xlsx2csv
+    tags:
+    - always
+    ignore_errors: true
+    
+  - name: Set variables
+    set_fact:
+      elasticsearch_url: "{{ elasticsearch_url |default('https://'~el_cloud_info[1]~'.'~el_cloud_info[0]) }}"
+      kibana_url: "{{ kibana_url |default('https://'~el_cloud_info[2]~'.'~el_cloud_info[0]) }}"
+      el_login: "{{ el_login |default(el_cloud_auth.split(':')|list) }}"
+    vars:
+      el_cloud_info: "{{ (el_cloud_id|regex_replace('^[^:]*:','')|b64decode).split('$')|list }}"
+    failed_when: el_cloud_info|length<2 or el_login|length!=2
+    tags:
+    - always
+
+  - name: "Check working dir: {{ workdir }}"
+    file: path="{{ workdir }}" state=directory mode=0775
+    tags:
+    - always
+    
+  - name: "Fetch stats"
+    get_url:
+      url: "{{ stats_url }}"
+      dest: "{{ workdir }}/{{ stats_url |basename }}"
+    tags:
+    - always
+
+  - name: Extract CSVs from stats
+    command:
+      cmd: xlsx2csv -a {{ workdir }}/{{ stats_url |basename }} data
+      chdir: "{{ workdir }}"
+    tags:
+    - always
+
+  - name: "Get file list"
+    find:
+      path: "{{ workdir }}/data"
+      patterns: "*.csv"
+    register: file_list
+    failed_when: file_list.matched<1
+    tags:
+    - always
+
+  - name: Import data
+    include_tasks: tasks/ingest_chbag_data.yml
+    loop: "{{ file_list.files|sort(attribute='path') }}"
+    loop_control:
+      label: "{{ item.path|basename }}"
+    tags:
+    - always

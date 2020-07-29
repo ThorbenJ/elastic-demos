@@ -1,0 +1,66 @@
+---
+
+- name: Read file
+  set_fact:
+    csvdata: "{{ lookup('file', item.path ).splitlines()|list }}"
+    
+- name: Get info
+  set_fact:
+    datainfo:
+      name: "{{ short_name }}"
+      index: "{{ short_name|regex_replace('[^A-Za-z0-9]', '_')|lower }}"
+      report: "{{ csvdata[0]|regex_replace('\"', '')|trim }}"
+      source: "{{ csvdata[1]|regex_replace('^Quelle:\\s+', '') }}"
+      description: "{{ (csvdata[3] ~' '~ csvdata[4])|regex_replace('\"', '')|trim }}"
+      dated: "{{ csvdata[0] |regex_replace('.*Stand ', '') |regex_replace(' Uhr\"', '') }} {{ ansible_date_time.tz_offset }}"
+      header: "{{ csvdata[6] |regex_findall('\"[^\"]*\"|[^,]+') |map('regex_replace', '\"', '') |list }}"
+  vars:
+    short_name: "{{ item.path|basename|regex_replace('.csv$', '') }}"
+
+- debug: var=datainfo
+
+- name: Write out ndjson file
+  template:
+    dest: "{{ item.path }}.ndjson"
+    src: chbag_bulk_index.j2
+    
+- name: Ingext data
+  uri:
+    url: "{{ elasticsearch_url }}/{{ datainfo.index }}/_bulk"
+    method: POST
+    src: "{{ item.path }}.ndjson"
+    remote_src: true
+    headers:
+      Content-Type: "application/x-ndjson"
+      Accept: "application/json"
+    url_username: "{{ el_login[0] }}"
+    url_password: "{{ el_login[1] }}"
+    force_basic_auth: true
+    timeout: 600
+    return_content: false #Take python/ansible too long to process...
+  #register: result
+  tags:
+    ingest
+
+- name: "Add Kibana index pattern for {{ datainfo.index }}"
+  uri:
+    url: "{{ kibana_url }}/api/saved_objects/index-pattern/{{ datainfo.index }}"
+    method: POST
+    body_format: json
+    body:
+      attributes:
+        title: "{{ datainfo.index }}"
+        timeFieldName: "{{ ('Datum' in datainfo.header)|ternary('Datum', omit) }}"
+    headers:
+      kbn-xsrf: true
+      Accept: "application/json"
+    url_username: "{{ el_login[0] }}"
+    url_password: "{{ el_login[1] }}"
+    force_basic_auth: true
+    timeout: 60
+    status_code: [200,201,409]
+    return_content: false
+  changed_when: result.status != 409
+  register: result
+  tags:
+  - index_pattern
