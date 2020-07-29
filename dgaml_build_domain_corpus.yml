@@ -9,7 +9,7 @@
 
 - hosts: all
   vars:
-    workdir: "{{ lookup('env', 'TMPDIR')|regex_replace('/+$','') }}/dgaml-demo"
+    workdir: "{{ lookup('env', 'TMPDIR')|default('/var/tmp')|regex_replace('/+$','') }}/dgaml-demo"
     corpus_index_prefix: "domain_corpus"
     day_range: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28] #Valid for all possible months
     month_range: [1,2,3,4,5,6,7,8,9,10,11,12]
@@ -51,7 +51,7 @@
       url_username: elastic
       url_password: "{{ el_cloud_pw }}"
       force_basic_auth: true
-      timeout: 600
+      timeout: 60
       status_code: [200,201,404]
       return_content: false
     register: result

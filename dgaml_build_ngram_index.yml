@@ -2,7 +2,7 @@
 
 - hosts: all
   vars:
-    workdir: "{{ lookup('env', 'TMPDIR')|regex_replace('/+$','') }}/dgaml-demo"
+    workdir: "{{ lookup('env', 'TMPDIR')|default('/var/tmp')|regex_replace('/+$','') }}/dgaml-demo"
     corpus_index_prefix: "domain_corpus"
     ngram_index_prefix: "domain_ngram"
     array_ngrams: false
