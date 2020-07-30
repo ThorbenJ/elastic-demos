@@ -4,6 +4,7 @@
   vars:
     workdir: "{{ lookup('env', 'TMPDIR')|default('/var/tmp')|regex_replace('/+$','') }}/chbad_stats"
     stats_url: "https://www.bag.admin.ch/dam/bag/de/dokumente/mt/k-und-i/aktuelle-ausbrueche-pandemien/2019-nCoV/covid-19-datengrundlage-lagebericht.xlsx.download.xlsx/200325_Datengrundlage_Grafiken_COVID-19-Bericht.xlsx"
+    max_age: 12h
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
@@ -42,8 +43,20 @@
     file: path="{{ workdir }}" state=directory mode=0775
     tags:
     - always
+    
+  - name: Find old files
+    find:
+      paths: "{{ workdir }}"
+      age: "{{ max_age }}"
+      recurse: true
+    register: file_list
+    
+  - name: Remove old files
+    file: path="{{ item.path }}" state=absent
+    loop: "{{ file_list.files }}"
+    loop_control:
+      label: "{{ item.path }}"
 
-  # FIXME: will want to fetch the same file again on next day..
   - name: "Fetch stats"
     get_url:
       url: "{{ stats_url }}"
